@@ -1,0 +1,6 @@
+{
+  "name": "食品消费者洞察与趋势分析系统",
+  "description": "基于AI驱动的多源数据采集、细粒度偏好挖掘、趋势爆发式红警看板与智能营销策略生成的食品行业一站式商情洞察系统。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
