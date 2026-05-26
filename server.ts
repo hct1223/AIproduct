@@ -423,6 +423,185 @@ let reportsDb: any[] = [
   }
 ];
 
+// Memory Knowledge Bases Store
+let kbsDb: any[] = [
+  {
+    id: "kb_1",
+    title: "爆款新中式配方与研发核心工艺库",
+    description: "本库封存我司历代爆款核心产品研发配方及原料比例、操作温湿度控制标准，属最高级别商业机密。",
+    category: "formula",
+    createdAt: "2026-03-12T08:00:00Z",
+    owner: "研发中心总监",
+    isPublic: false,
+    permittedRoles: ["研发组", "高管层"],
+    securityLevel: "L3",
+    documentCount: 2
+  },
+  {
+    id: "kb_2",
+    title: "竞品线态势变化与战前对策智库",
+    description: "重点监控竞争对手（茉酸奶、奈雪、酥合桃源等）最新口味、供应链价格、选址变化及狙击对策。",
+    category: "competitor",
+    createdAt: "2026-04-01T10:15:00Z",
+    owner: "市场部高级专家",
+    isPublic: false,
+    permittedRoles: ["策划组", "高管层", "研发组"],
+    securityLevel: "L2",
+    documentCount: 2
+  },
+  {
+    id: "kb_3",
+    title: "新零售新媒体营销文案与合规避雷手册",
+    description: "针对小红书、抖音、大众点评等渠道的文案合规，禁忌词汇、虚假宣传规避以及营销通用模版。",
+    category: "marketing",
+    createdAt: "2026-04-18T14:30:00Z",
+    owner: "合规风控组长",
+    isPublic: true,
+    permittedRoles: ["研发组", "策划组", "销售组", "高管层"],
+    securityLevel: "L1",
+    documentCount: 2
+  }
+];
+
+// Memory Knowledge Documents Store
+let kbDocsDb: any[] = [
+  {
+    id: "doc_1_1",
+    kbId: "kb_1",
+    title: "【配方】新会五年陈皮慢焙酸奶巴斯克核心配料与温度控制表",
+    content: `## 研发代号：Orange-Basque-05
+**版本**：v1.4 | **密集状态**：L3 绝对机密
+
+### 一、 核心原材料及供应商选用
+1. **五年陈皮**：选用广东江门老字号干仓陈化五年新会陈皮，手工刨除白瓤，冷萃研磨至80目微粒。
+2. **高端干酪**：新西兰恒天然原产奶油芝士，常温退冰至18℃备用。
+3. **希腊酸奶**：0蔗糖高纯度希腊代酸乳，作为油脂替代质轻化。
+
+### 二、 标准黄金投料配比 (单模 6寸)
+| 原料 | 重量(g) | 投放顺序 | 核心目的 |
+| :--- | :--- | :--- | :--- |
+| 奶油芝士 | 350g | 第一步 | 打底骨架 |
+| 希腊酸奶 | 120g | 第二步 | 减脂提纯 |
+| 赤藓糖醇 | 65g | 第三步 | 控糖口感 |
+| 全蛋液 | 3颗 | 第四步 | 饱满塑形 |
+| 80目细陈皮碎 | 4.5g | 同芝士慢速打发 | 增添清苦微回甘口感 |
+
+### 三、 烤制与回温工艺细节
+- **第一阶段（急速膨胀）**：烤箱预热上火230℃ / 下火215℃，烤制18分钟，使表层形成完美焦褐黑金外衣而不破裂。
+- **第二阶段（溏心维稳）**：迅速降温至上火200℃ / 下火190℃，烤制8分钟。
+- **成熟度指标**：出炉时，轻轻晃动模具，中心应呈现“如果冻般柔和轻颤”即为最佳状态。
+- **陈化回油**：常温降下后，放置于4℃恒湿库冷藏熟化14小时，果皮中的陈皮油与乳酪乳脂充分互溶，方可呈盘。`,
+    updatedAt: "2026-05-10T09:12:00Z",
+    author: "研发组总监(Dr. Lee)",
+    tags: ["新中式", "配方", "陈皮红豆"]
+  },
+  {
+    id: "doc_1_2",
+    kbId: "kb_1",
+    title: "【研发】开心果暴风雪流心慕斯杯质地稳定性攻坚报告",
+    content: `## 研发代号：Pistachio-Snow-Cup
+**稳定方案技术论证要点**：
+本报告主要解决开心果油脂过重引起冷置后“水油分离”以及长时间搁置表层坚果碎软化的问题。
+
+### 一、 稳定起沙配方优化
+- 原材料引入质量分数为 **12%** 的开心果物理压榨纯浆搭配 **0.8%** 的大豆磷脂乳化。
+- 将原本淡奶油与糖乳比例由4:1提升至 **4.5:1**，不采取额外淀粉增稠，确保冷藏48小时不渗水，且能保留天然浅绿多巴胺颜色。
+
+### 二、 极致三重咬感阻尼方案 (Acoustic and Tactile Texture)
+1. **表层 (脆爽爆响)**：真空冷冻干燥开心果碎（含水率限制在2%以内），在出杯前3秒现场撒布。
+2. **中层 (丝绒柔滑)**：乳化开心果酸奶慕斯，冷置温度稳定在2℃~5℃。
+3. **底层 (韧性回弹)**：中式手打黑糖麻薯，提供越咬越香的咀嚼快感阻尼。`,
+    updatedAt: "2026-05-18T11:45:00Z",
+    author: "配方研发员小陈",
+    tags: ["开心果", "口感结构", "冷链标准"]
+  },
+  {
+    id: "doc_2_1",
+    kbId: "kb_2",
+    title: "【拦截战】茉酸奶与酥合桃源茉莉生椰酸奶新品横向测算",
+    content: `### 竞品情报破译
+
+#### 1. 茉酸奶茉莉生椰系列测算
+- **定标价格**：28元/中杯，34元/大杯。
+- **配方推演**：核心原料使用茉茉茶研磨冻干粉，辅以市售厚椰乳和少量稀奶油增脂，主打高热量多巴胺口感。
+- **用户痛点监测**：小红书反馈“喝到后半杯极其腻口”、“香精香气过于明显违和”。
+
+#### 2. 我司狙击与迎战方案
+- **差异化竞争**：我们定位为“冷萃茉莉乌龙代餐冷卡低糖杯”，价格锚定在 **22-25元** 黄金段（略低3-5元以刺穿年轻群心智）。
+- **材料反击**：
+  - 剔除厚椰乳香精，改为**水牛奶+冷萃茉莉原叶茶汤**。
+  - 主打糖醇，直切“减肥不累嘴”卖点，在小红书宣称“两倍纯净，一呼一吸间的森林茶感”。
+- **营销抓手**：利用点点送微信小程序，限时联合“开心果流心大福”发起下午茶买一送一抢神券裂变！`,
+    updatedAt: "2026-05-20T17:30:00Z",
+    author: "竞品监控组长",
+    tags: ["茉莉生椰", "定价攻坚", "茉酸奶"]
+  },
+  {
+    id: "doc_2_2",
+    kbId: "kb_2",
+    title: "【供应链】酥合桃源核心原物供应链底价与物流路径深度起底",
+    content: `### 酥合桃源供应链机密报告
+
+根据行业协会高管走访及海关/大宗交易物流溯源，破译其核心供货源头：
+1. **开心果碎原料商**：山东寿光某坚果深加工厂，采购均价约 **42,000元/吨**。通过极快账款周期压低拿货价。
+2. **乳制品工厂**：主要代工厂在江苏盐城和嘉兴，采用超高温超巴氏瞬时杀菌，质保期为21天，运输半径500公里。
+
+### 应对竞争性供应链降本策略：
+- **合作农垦**：建议引入四川本地开心果及云南高山坚果源头包林，力争将我们的原物料价格压制到 **38,000元/吨** 这一生死边缘以下。
+- **本地化冷链**：利用我们现有的短半径微型生鲜配送库进行冷鲜对决，将周转周期从10天压缩到 **4天内**，突出极致新鲜。`,
+    updatedAt: "2026-05-21T08:15:00Z",
+    author: "供应链协调官",
+    tags: ["供应链", "成本剖析", "坚果碎"]
+  },
+  {
+    id: "doc_3_1",
+    kbId: "kb_3",
+    title: "【合规】关于食品及奶茶类商品在小红书营销违禁词回避红线",
+    content: `### 小红书笔记食品核心风控白皮书
+
+为保障我司在小红书、抖音投放KOL/KOC时不被下架或限流，所有推广及自研笔记必须严格遵守：
+
+#### 一、 绝对禁止的极限词（极高归档下架风险）
+1. **功效夸大类**：禁止使用“防癌”、“降血压”、“绝对减肥”、“清宿便”、“护肝回血解毒”。
+2. **第一头衔类**：禁止使用“中国第一”、“顶级食品技术”、“首创配方”、“绝对天然”。
+
+#### 二、 安全替换话术范本
+- ❌ 旧话术：“全网最好吃的开心果爆浆，吃一颗瞬间瘦三斤！”
+- ✅ 新话术：“精选饱满开心果压榨，坚果沙沙中感受流心的快乐。少油减卡，下午茶低负担陪伴。”
+- ❌ 旧话术：“精选纯天然五年陈皮，古法中医秘方降火祛斑。”
+- ✅ 新话术：“采用精细研磨的五年陈皮研物，搭配清凉甘甜茶汤，感受来自传统原产地的醇厚韵味。”`,
+    updatedAt: "2026-05-15T15:00:00Z",
+    author: "法务合规组(Jessica)",
+    tags: ["文案规范", "违禁词", "小红书"]
+  },
+  {
+    id: "doc_3_2",
+    kbId: "kb_3",
+    title: "【模板】抖音美食博主创意视频一分钟黄金脚本框架",
+    content: `## 抖音剧情与垂涎细节双核一分钟爆款视频脚本模板
+
+适用于我司“开心果流心大福”或“五年陈皮酸奶巴斯克”新品首发KOL辅导。
+
+### ⏱️ 00:00 - 00:05 | 视觉黄金炸弹 (Hook)
+- **镜头**：极近距离特写。两根手指轻轻捏开一个饱满的、软糯到极点的绿色大福，慢慢拉扯——
+- **动作**：大福表层绿色粉尘微动，内里嫩白拉丝麻薯延展至15厘米，紧接着，浓稠的荧光深绿开心果流心如瀑布般汹涌倾泻。
+- **音效提示**：重低音心跳声 + 流动音效（咕嘟）。
+- **字幕**：**【警告！千万别在深夜捏大福...】**
+
+### ⏱️ 00:05 - 00:30 | 诉求切入与办公室解压痛点
+- **镜头**：切入至白领在格子间焦躁敲键盘的实景，突然被大福的天然绿打断。
+- **旁白**：下午三点，脑子在飞去休假，手在机械敲字，你需要一个懂你的多巴胺！
+- **台词**：纯手工五年陈皮巴斯克，不是普通的乳酪，是低糖红糖醇带来的‘微温治愈’。
+
+### ⏱️ 00:30 - 01:00 | 原材料高定质地背书与行动链接
+- **镜头**：干净的大案板上，陈皮碎被精心撒在乳酪中的美学特写。
+- **旁白/台词**：只用新会黄金海岸大颗粒原料，一口下去有奶酪丝滑，又有柑橘微苦回甘。关注我，点屏幕下方小程序定位，下午茶半价，顺丰冷链送到工位！`,
+    updatedAt: "2026-05-22T02:00:00Z",
+    author: "创意营销策划",
+    tags: ["视频脚本", "抖音", "开心果"]
+  }
+];
+
 // Memory User Personas Database
 let personasDb: any[] = [
   {
@@ -677,6 +856,22 @@ app.post("/api/analytics/upload-enterprise", (req, res) => {
 // Fetch Reports list
 app.get("/api/analytics/reports", (req, res) => {
   res.json({ status: "success", data: reportsDb });
+});
+
+// Custom endpoint to save exported chatbot analysis reports
+app.post("/api/analytics/reports/save", (req, res) => {
+  const { title, type, summary, contentMarkdown } = req.body;
+  const newReport = {
+    id: "rep_" + Date.now(),
+    title: title || "智脑对话导出报告",
+    type: type || "daily",
+    createdAt: new Date().toLocaleDateString('zh-CN') + ' ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+    summary: summary || "来自AI智能对话助手的对话成果，已一键收录至系统报告舱。",
+    generatedByAI: true,
+    contentMarkdown: contentMarkdown || "### 暂无报告内容"
+  };
+  reportsDb.unshift(newReport);
+  res.json({ status: "success", data: newReport });
 });
 
 // Generate dynamic reports using Gemini
@@ -1120,6 +1315,207 @@ app.post("/api/analytics/chat", async (req, res) => {
   } catch (error: any) {
     console.error("Gemini Chat interaction error:", error);
     res.status(500).json({ error: "AI failed to respond.", details: error.message });
+  }
+});
+
+// --- Knowledge Base Management APIs ---
+
+// 1. Get all Knowledge Bases
+app.get("/api/kb", (req, res) => {
+  res.json({ status: "success", data: kbsDb });
+});
+
+// 2. Create a new Knowledge Base
+app.post("/api/kb", (req, res) => {
+  const { title, description, category, permittedRoles, securityLevel, isPublic } = req.body;
+  if (!title || !description || !category) {
+    return res.status(400).json({ error: "Missing required fields: title, description, category" });
+  }
+
+  const newKb = {
+    id: "kb_" + Date.now(),
+    title,
+    description,
+    category,
+    createdAt: new Date().toISOString(),
+    owner: "管理员",
+    isPublic: isPublic ?? true,
+    permittedRoles: permittedRoles ?? ["研发组", "策划组", "销售组", "高管层"],
+    securityLevel: securityLevel ?? "L1",
+    documentCount: 0
+  };
+
+  kbsDb.unshift(newKb);
+  res.json({ status: "success", data: newKb });
+});
+
+// 3. Assign permissions to a knowledge base
+app.post("/api/kb/permissions", (req, res) => {
+  const { id, permittedRoles, securityLevel, isPublic } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "Missing knowledge base ID" });
+  }
+
+  const kbIndex = kbsDb.findIndex(k => k.id === id);
+  if (kbIndex === -1) {
+    return res.status(404).json({ error: "Knowledge Base not found" });
+  }
+
+  kbsDb[kbIndex] = {
+    ...kbsDb[kbIndex],
+    permittedRoles: permittedRoles ?? kbsDb[kbIndex].permittedRoles,
+    securityLevel: securityLevel ?? kbsDb[kbIndex].securityLevel,
+    isPublic: isPublic !== undefined ? isPublic : kbsDb[kbIndex].isPublic
+  };
+
+  res.json({ status: "success", data: kbsDb[kbIndex] });
+});
+
+// 4. Delete a knowledge base
+app.delete("/api/kb/:id", (req, res) => {
+  const { id } = req.params;
+  const kbIndex = kbsDb.findIndex(k => k.id === id);
+  if (kbIndex === -1) {
+    return res.status(404).json({ error: "Knowledge Base not found" });
+  }
+
+  kbsDb.splice(kbIndex, 1);
+  // Cascading deletes of documents
+  kbDocsDb = kbDocsDb.filter(doc => doc.kbId !== id);
+
+  res.json({ status: "success", message: "Knowledge Base and its documents deleted." });
+});
+
+// 5. Get all documents for a specific Knowledge Base
+app.get("/api/kb/docs/:kbId", (req, res) => {
+  const { kbId } = req.params;
+  const docs = kbDocsDb.filter(doc => doc.kbId === kbId);
+  res.json({ status: "success", data: docs });
+});
+
+// 6. Create or upload a document to a Knowledge Base
+app.post("/api/kb/docs", (req, res) => {
+  const { kbId, title, content, author, tags } = req.body;
+  if (!kbId || !title || !content) {
+    return res.status(400).json({ error: "Missing required fields: kbId, title, and content" });
+  }
+
+  const newDoc = {
+    id: "doc_" + Date.now(),
+    kbId,
+    title,
+    content,
+    updatedAt: new Date().toISOString(),
+    author: author ?? "系统智脑管理员",
+    tags: tags ?? []
+  };
+
+  kbDocsDb.unshift(newDoc);
+
+  // Increment document count in knowledge base
+  const kbIndex = kbsDb.findIndex(k => k.id === kbId);
+  if (kbIndex !== -1) {
+    kbsDb[kbIndex].documentCount = (kbsDb[kbIndex].documentCount || 0) + 1;
+  }
+
+  res.json({ status: "success", data: newDoc });
+});
+
+// 7. Delete a document from a Knowledge Base
+app.delete("/api/kb/docs/:id", (req, res) => {
+  const { id } = req.params;
+  const docIndex = kbDocsDb.findIndex(d => d.id === id);
+  if (docIndex === -1) {
+    return res.status(404).json({ error: "Knowledge document not found" });
+  }
+
+  const kbId = kbDocsDb[docIndex].kbId;
+  kbDocsDb.splice(docIndex, 1);
+
+  // Decrement document count in knowledge base
+  const kbIndex = kbsDb.findIndex(k => k.id === kbId);
+  if (kbIndex !== -1) {
+    kbsDb[kbIndex].documentCount = Math.max(0, (kbsDb[kbIndex].documentCount || 1) - 1);
+  }
+
+  res.json({ status: "success", message: "Document deleted successfully" });
+});
+
+// 8. AI draft a document using Gemini AI based on parameters
+app.post("/api/kb/docs/ai-generate", async (req, res) => {
+  const { kbId, titlePrompt, keyElements, audience } = req.body;
+  if (!titlePrompt) {
+    return res.status(400).json({ error: "Missing title or topic prompt for AI generation." });
+  }
+
+  const aiClient = getGeminiClient();
+
+  if (!aiClient) {
+    // Generate beautiful Simulated Draft
+    const simulatedTitle = `【AI智脑智库拟定】${titlePrompt}`;
+    const simulatedContent = `## ${simulatedTitle}
+**研判预测级别**：A级高契合 | **目标受众圈层**：${audience || '全渠道生态客群'}
+
+### 一、 核心商业洞察与突破口
+针对当下不断迭代的高端烘焙与茶饮垂直市场反馈，围绕「${titlePrompt}」进行深度技术破局。${keyElements ? `特别融入您强调的差异点：**${keyElements}**。` : '依据AI大势智脑红警监测系统显示，市场口感期待逐步转向轻负担天然属性。'}
+
+### 二、 绝密风味口感与反水油策略
+1. **风味组合推荐**：极力倡导用熟化开心果纯浆或五年低温陈化古风新会陈皮进行香型对冲。
+2. **质地阻尼改良**：
+   - 必须通过引入 **0.8%** 的大豆磷脂乳化开心果高油脂，防止产生“水油分离”。
+   - 增加糯麻薯、拉丝水牛奶等质地粘韧度，增强咀嚼过程中的社交溢价与多巴胺获得感。
+
+### 三、 小红书与抖音全媒体营销合规突围
+- 笔记宣传文案中应完全规避“中国最强”、“降脂减糖功效”等敏感违禁词彙。
+- 采用**【黄金五秒视觉流心大特写 + 办公室疲惫场景共情 + 下午茶买一送一链接裂变】**的通用抖音爆款一分钟脚本框架实施投放。`;
+
+    return res.json({
+      status: "success",
+      mode: "simulated_local",
+      data: {
+        title: simulatedTitle,
+        content: simulatedContent,
+        tags: ["AI拟定", "食品科学", "爆款工艺"]
+      }
+    });
+  }
+
+  try {
+    const prompt = `您是一位拥有20年从业经验的食品茶饮行业顶级研发科学家兼大中华区首席CMO，请为我们起草一份专业的知识库深度文档。
+文档主题方向：[${titlePrompt}]
+涉及的核心要素/关键词：[${keyElements || '无特别指定'}]
+目标受众或应用场景：[${audience || '全渠道生态客群'}]
+
+你需要起草极具商业与研发实操作用、逻辑紧密的文档，使用行业专业用语，切忌宽泛废话。
+请严格输出为 JSON 格式，结构如下:
+{
+  "title": "[AI拟定] 一句极具专业度与商业诱惑力的新标题",
+  "content": "使用Markdown格式书写的专家文档详细内容。请务必包含多级标题、粗体、列表或表格。字数不少于500字，深度讨论配方、供应链、法规合规或竞品防御策略。",
+  "tags": ["标签1", "标签2", "标签3"]
+}`;
+
+    const response = await aiClient.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            content: { type: Type.STRING },
+            tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["title", "content", "tags"]
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text?.trim() || "{}");
+    res.json({ status: "success", mode: "gemini_ai", data: parsed });
+  } catch (error: any) {
+    console.error("Gemini document generation error:", error);
+    res.status(500).json({ error: "AI failed to generate doc draft.", details: error.message });
   }
 });
 

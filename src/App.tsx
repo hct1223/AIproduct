@@ -7,13 +7,16 @@ import MarketingStrategy from './components/MarketingStrategy';
 import CompetitorMonitor from './components/CompetitorMonitor';
 import CustomerPersonas from './components/CustomerPersonas';
 import AiChat from './components/AiChat';
+import KnowledgeBase from './components/KnowledgeBase';
+import MultiAgentCenter from './components/MultiAgentCenter';
 import { 
   BarChart3, Database, FileText, Megaphone, Compass, 
-  HelpCircle, Coffee, Sparkles, Loader2, AlertCircle, RefreshCw, Users
+  HelpCircle, Coffee, Sparkles, Loader2, AlertCircle, RefreshCw, Users, BookOpen, Shield, Cpu
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'ingestion' | 'reports' | 'marketing' | 'competitors' | 'personas' | 'chat'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'ingestion' | 'reports' | 'marketing' | 'competitors' | 'personas' | 'chat' | 'kb' | 'agent'>('dashboard');
+  const [dashboardSubTab, setDashboardSubTab] = useState<'trends' | 'competitors' | 'personas'>('trends');
 
   // Backend state databases
   const [trends, setTrends] = useState<KeywordTrend[]>([]);
@@ -34,6 +37,60 @@ export default function App() {
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Enterprise Role & Thread trigger states
+  const [userRole, setUserRole] = useState<'高管层' | '研发组' | '策划组' | '销售组' | '财务部' | '店长层'>('高管层');
+  const [newChatTrigger, setNewChatTrigger] = useState<number>(0);
+
+  // Tab permission policy checker
+  const isTabPermitted = (tab: string) => {
+    if (userRole === '高管层') return true;
+    if (tab === 'dashboard' || tab === 'chat' || tab === 'marketing' || tab === 'competitors' || tab === 'personas') {
+      return true;
+    }
+    if (tab === 'ingestion') {
+      return ['研发组', '店长层', '高管层'].includes(userRole);
+    }
+    if (tab === 'reports') {
+      return ['财务部', '策划组', '高管层'].includes(userRole);
+    }
+    return true; // Filtered item-level in kb
+  };
+
+  // Render Lockout overlay card
+  const renderAccessDenied = () => {
+    const requiredRolesMap: Record<string, string[]> = {
+      ingestion: ['研发组', '店长层', '高管层'],
+      reports: ['财务部', '策划组', '高管层'],
+    };
+    const reqs = requiredRolesMap[activeTab] || ['高管层'];
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-xl mx-auto my-12 shadow-xs space-y-4 animate-fade-in">
+        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-100 mb-2">
+          <Shield className="w-8 h-8" />
+        </div>
+        <h2 className="text-base font-bold text-slate-900">
+          🔐 访问权限受到操作安全受控
+        </h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          抱歉，根据《食品商情安全合规底线》，当前模块关联有高频网关洗码接口与深度财务洗账参数，仅对 
+          <strong className="text-indigo-600 px-1">{reqs.join('、')}</strong> 开放。
+        </p>
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1 text-slate-700 text-xs">
+          <p>当前您的授权角色为：<strong className="text-rose-600 font-bold">{userRole}</strong></p>
+          <p className="text-[10px] text-slate-400">（您可以随时在顶部操作栏中，将角色切换至<strong>高管层</strong>或许可角色，重新对准数据网关）</p>
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={() => setUserRole('高管层')}
+            className="bg-indigo-600 hover:bg-slate-900 text-white font-bold text-xs py-2.5 px-6 rounded-lg transition-all cursor-pointer shadow-2xs"
+          >
+            快速切换为「高管层」获取全域权限
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch full dataset on launch with enhanced resilience against partial failure OR startup delays
   const fetchData = async () => {
@@ -281,13 +338,12 @@ export default function App() {
         
         <div className="flex overflow-x-auto gap-1.5 pb-1 scrollbar-none snap-x" id="mobile_integrations_tabs">
           {[
-            { id: 'dashboard', label: '大盘红警', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+            { id: 'dashboard', label: '数据分析看板', icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { id: 'ingestion', label: '采集沙盒', icon: <Database className="w-3.5 h-3.5" /> },
             { id: 'reports', label: '情报报告', icon: <FileText className="w-3.5 h-3.5" /> },
             { id: 'marketing', label: '爆款策划', icon: <Megaphone className="w-3.5 h-3.5" /> },
-            { id: 'competitors', label: '竞品监测', icon: <Compass className="w-3.5 h-3.5" /> },
-            { id: 'personas', label: '客户画像', icon: <Users className="w-3.5 h-3.5" /> },
-            { id: 'chat', label: 'AI智脑对话', icon: <Sparkles className="w-3.5 h-3.5" /> }
+            { id: 'kb', label: '知识库', icon: <BookOpen className="w-3.5 h-3.5" /> },
+            { id: 'agent', label: '多智能体', icon: <Cpu className="w-3.5 h-3.5 text-indigo-500" /> }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             return (
@@ -330,19 +386,32 @@ export default function App() {
             </div>
           </div>
 
+          {/* New Chat Top Command button */}
+          <div className="px-4 pt-1 pb-1">
+            <button
+              onClick={() => {
+                setActiveTab('chat');
+                setNewChatTrigger(prev => prev + 1);
+              }}
+              className="w-full bg-indigo-600 hover:bg-slate-900 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all cursor-pointer border border-indigo-600"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>新增对话</span>
+            </button>
+          </div>
+
           {/* Desktop Tab Selection Grid Rendered Vertically */}
           <nav className="flex-1 p-4 space-y-1.5">
             <span className="px-3 py-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-2 select-none">
               系统功能导航菜单
             </span>
             {[
-              { id: 'dashboard', label: '① 趋势红警大盘', icon: <BarChart3 className="w-4 h-4" /> },
+              { id: 'dashboard', label: '① 数据分析看板', icon: <BarChart3 className="w-4 h-4" /> },
               { id: 'ingestion', label: '② 多源采集与 AI 沙盒', icon: <Database className="w-4 h-4" /> },
               { id: 'reports', label: '③ 情报报告中心', icon: <FileText className="w-4 h-4" /> },
               { id: 'marketing', label: '④ 智能爆款策划', icon: <Megaphone className="w-4 h-4" /> },
-              { id: 'competitors', label: '⑤ 竞品动态监测', icon: <Compass className="w-4 h-4" /> },
-              { id: 'personas', label: '⑥ 消费者客群画像', icon: <Users className="w-4 h-4" /> },
-              { id: 'chat', label: '⑦ AI 智脑对话中心', icon: <Sparkles className="w-4 h-4" /> }
+              { id: 'kb', label: '⑤ 知识库', icon: <BookOpen className="w-4 h-4" /> },
+              { id: 'agent', label: '⑥ 多智能体协作中心', icon: <Cpu className="w-4 h-4 text-indigo-500 animate-pulse-growth" /> }
             ].map(tab => {
               const isActive = activeTab === tab.id;
               return (
@@ -397,19 +466,44 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-4 bg-indigo-600 rounded-xs"></span>
             <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">
-              {activeTab === 'dashboard' && '趋势红警大盘 · FLAVOR BUZZ DIAGNOSTICS'}
+              {activeTab === 'dashboard' && (
+                dashboardSubTab === 'trends' ? '数据分析看板 · 趋势红警大盘' :
+                dashboardSubTab === 'competitors' ? '数据分析看板 · 竞品动态监测' : '数据分析看板 · 消费者客群画像'
+              )}
               {activeTab === 'ingestion' && '多源采集与 AI 沙盒 · MULTI-SOURCE INGESTOR'}
               {activeTab === 'reports' && '情报报告中心 · ANALYTIC INTELLIGENCE'}
               {activeTab === 'marketing' && '智能爆款策划 · TACTICAL GENERATOR'}
-              {activeTab === 'competitors' && '竞品动态监测 · COMPETITOR TRACKING'}
-              {activeTab === 'personas' && '消费者客群画像 · CONSUMER PERSONAS DECODER'}
-              {activeTab === 'chat' && 'AI 智脑对话中心 · ANALYTIC AI COPILOT'}
+              {activeTab === 'chat' && '新增对话 · ANALYTIC AI ASSISTANT'}
+              {activeTab === 'kb' && '知识库 · ENFORCED KNOWLEDGE'}
+              {activeTab === 'agent' && '多智能体自驱协作中心 · AUTONOMOUS AGENT SWARM'}
             </h2>
           </div>
           
-          <div className="text-slate-400 text-[10px] font-mono flex items-center gap-4">
-            <span>数据同步: <strong className="text-emerald-500 font-sans">LIVE</strong></span>
-            <span>当前时区: 2026-05-22 UTC</span>
+          <div className="flex items-center gap-4">
+            {/* 🔐 Role Selector dropdown */}
+            <div className="flex items-center gap-2 border border-slate-200 bg-slate-50/60 hover:bg-slate-50 px-3 py-1.5 rounded-xl text-xs transition">
+              <Shield className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+              <span className="text-[10px] text-slate-500 font-bold select-none">操作授权视角:</span>
+              <select
+                value={userRole}
+                onChange={(e) => {
+                  const val = e.target.value as any;
+                  setUserRole(val);
+                }}
+                className="bg-transparent font-black text-slate-800 focus:outline-hidden text-xs cursor-pointer border-0 p-0 pr-1"
+              >
+                <option value="高管层">高管层 (全空域功能权限)</option>
+                <option value="研发组">研发组视角 (配方工艺研发)</option>
+                <option value="策划组">策划组视角 (新品定位企划)</option>
+                <option value="销售组">销售组视角 (爆款回单分析)</option>
+                <option value="财务部">财务部视角 (商业毛利成本)</option>
+                <option value="店长层">店长层视角 (店客诉舆情治理)</option>
+              </select>
+            </div>
+
+            <div className="text-slate-400 text-[10px] font-mono flex items-center gap-2">
+              <span>数据雷达: <strong className="text-emerald-500 font-sans font-bold">同步中</strong></span>
+            </div>
           </div>
         </header>
 
@@ -428,58 +522,112 @@ export default function App() {
 
         {/* Render child pages */}
         <main className="flex-grow px-4 md:px-6 py-6" id="app_main_arena">
-          {activeTab === 'dashboard' && (
-            <Dashboard 
-              trends={trends} 
-              onSelectKeywordForStrategy={handleSelectKeywordForStrategy}
-              onSimulateTrendBoost={handleSimulateTrendBoost}
-              isSimulating={isSimulating}
-            />
-          )}
+          {!isTabPermitted(activeTab) ? (
+            renderAccessDenied()
+          ) : (
+            <>
+              {activeTab === 'dashboard' && (
+                <div className="space-y-6">
+                  {/* Styled sub tabs switcher */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-3xs" id="dashboard_sub_tabs">
+                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-none w-full sm:w-auto">
+                      {[
+                        { id: 'trends', label: '趋势红警大盘', icon: <BarChart3 className="w-4 h-4" /> },
+                        { id: 'competitors', label: '竞品动态监测', icon: <Compass className="w-4 h-4" /> },
+                        { id: 'personas', label: '消费者客群画像', icon: <Users className="w-4 h-4" /> }
+                      ].map(sub => {
+                        const isActive = dashboardSubTab === sub.id;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => setDashboardSubTab(sub.id as any)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition duration-150 flex items-center gap-2 cursor-pointer shrink-0 ${
+                              isActive 
+                                ? 'bg-indigo-600 text-white shadow-2xs' 
+                                : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                          >
+                            {sub.icon}
+                            <span>{sub.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="hidden lg:flex items-center gap-2 pr-3 text-indigo-700 bg-indigo-50 border border-indigo-100/50 px-3 py-1.5 rounded-xl text-[10px] font-bold">
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse text-indigo-600" />
+                      <span>本数据分析看板实时合并社媒、客群画像及竞品指标</span>
+                    </div>
+                  </div>
 
-          {activeTab === 'ingestion' && (
-            <DataIngestion 
-              feeds={feeds}
-              uploads={uploads}
-              onAnalyzeNewComment={handleAnalyzeNewComment}
-              onUploadEnterpriseData={handleUploadEnterpriseData}
-              isAnalyzing={isAnalyzingFeed}
-            />
-          )}
+                  {dashboardSubTab === 'trends' && (
+                    <Dashboard 
+                      trends={trends} 
+                      onSelectKeywordForStrategy={handleSelectKeywordForStrategy}
+                      onSimulateTrendBoost={handleSimulateTrendBoost}
+                      isSimulating={isSimulating}
+                    />
+                  )}
 
-          {activeTab === 'reports' && (
-            <ReportCenter 
-              reports={reports}
-              onGenerateNewReport={handleGenerateNewReport}
-              isGenerating={isGeneratingReport}
-            />
-          )}
+                  {dashboardSubTab === 'competitors' && (
+                    <CompetitorMonitor 
+                      competitors={competitors}
+                    />
+                  )}
 
-          {activeTab === 'marketing' && (
-            <MarketingStrategy 
-              onGenerateStrategy={handleGenerateMarketingStrategy}
-              isGenerating={isGeneratingStrategy}
-              selectedDefaultKeyword={strategyKeyword}
-            />
-          )}
+                  {dashboardSubTab === 'personas' && (
+                    <CustomerPersonas 
+                      personas={personas}
+                      trends={trends}
+                      onGeneratePersona={handleGeneratePersona}
+                      isGenerating={isGeneratingPersona}
+                    />
+                  )}
+                </div>
+              )}
 
-          {activeTab === 'competitors' && (
-            <CompetitorMonitor 
-              competitors={competitors}
-            />
-          )}
+              {activeTab === 'ingestion' && (
+                <DataIngestion 
+                  feeds={feeds}
+                  uploads={uploads}
+                  onAnalyzeNewComment={handleAnalyzeNewComment}
+                  onUploadEnterpriseData={handleUploadEnterpriseData}
+                  isAnalyzing={isAnalyzingFeed}
+                />
+              )}
 
-          {activeTab === 'personas' && (
-            <CustomerPersonas 
-              personas={personas}
-              trends={trends}
-              onGeneratePersona={handleGeneratePersona}
-              isGenerating={isGeneratingPersona}
-            />
-          )}
+              {activeTab === 'reports' && (
+                <ReportCenter 
+                  reports={reports}
+                  onGenerateNewReport={handleGenerateNewReport}
+                  isGenerating={isGeneratingReport}
+                />
+              )}
 
-          {activeTab === 'chat' && (
-            <AiChat />
+              {activeTab === 'marketing' && (
+                <MarketingStrategy 
+                  onGenerateStrategy={handleGenerateMarketingStrategy}
+                  isGenerating={isGeneratingStrategy}
+                  selectedDefaultKeyword={strategyKeyword}
+                />
+              )}
+
+              {activeTab === 'chat' && (
+                <AiChat 
+                  userRole={userRole}
+                  trends={trends}
+                  onRefreshFullData={fetchData}
+                  setActiveTab={setActiveTab}
+                />
+              )}
+
+              {activeTab === 'kb' && (
+                <KnowledgeBase userRole={userRole} />
+              )}
+
+              {activeTab === 'agent' && (
+                <MultiAgentCenter userRole={userRole} />
+              )}
+            </>
           )}
         </main>
 

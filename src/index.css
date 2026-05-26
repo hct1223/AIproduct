@@ -22,7 +22,33 @@
   50% { background-color: rgba(185, 28, 28, 0.4); box-shadow: 0 0 2px rgba(220, 38, 38, 0.1); }
 }
 
+@keyframes soft-growth-breathe {
+  0%, 100% {
+    background-color: rgba(240, 253, 244, 0.45);
+  }
+  50% {
+    background-color: rgba(187, 247, 208, 0.55);
+  }
+}
+
+@keyframes soft-explosive-breathe {
+  0%, 100% {
+    background-color: rgba(254, 242, 242, 0.45);
+  }
+  50% {
+    background-color: rgba(254, 205, 211, 0.6);
+  }
+}
+
 .animate-pulse-alert {
   animation: blink-ruby-red 1.8s infinite;
+}
+
+.animate-pulse-growth {
+  animation: soft-growth-breathe 2.8s ease-in-out infinite;
+}
+
+.animate-pulse-explosive {
+  animation: soft-explosive-breathe 2.4s ease-in-out infinite;
 }
 

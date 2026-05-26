@@ -155,3 +155,29 @@ export interface MarketingStrategyProposal {
   };
   predictedOutcome: string;
 }
+
+// Knowledge Base Definition
+export interface KnowledgeBase {
+  id: string;
+  title: string;
+  description: string;
+  category: 'formula' | 'competitor' | 'insight' | 'marketing' | 'policy';
+  createdAt: string;
+  documentCount: number;
+  owner: string;
+  isPublic: boolean;
+  permittedRoles: string[]; // e.g., ["研发组", "策划组", "高管层", "销售组"]
+  securityLevel: 'L1' | 'L2' | 'L3'; // L1-公开, L2-团队内部, L3-绝对机密
+}
+
+// Knowledge Document Definition
+export interface KnowledgeDocument {
+  id: string;
+  kbId: string;
+  title: string;
+  content: string;
+  updatedAt: string;
+  author: string;
+  tags: string[];
+}
+

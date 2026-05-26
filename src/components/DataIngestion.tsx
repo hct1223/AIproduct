@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { ScrapedDataFeed, EnterpriseDataUpload } from '../types';
+import React, { useState, useEffect } from 'react';
+import { ScrapedDataFeed, EnterpriseDataUpload, KnowledgeBase } from '../types';
 import { 
   Database, Plus, Link, Calendar, User, Info, Check, CloudUpload, 
   Trash, Trash2, MessageSquare, AlertCircle, Sparkles, Send, Network, Cpu, Loader2,
   Settings, Filter, Key, Shield, Play, Pause, RefreshCw, Sliders, Lock, Server, Globe,
-  ChevronDown, ChevronUp, CheckSquare, Square
+  ChevronDown, ChevronUp, CheckSquare, Square, BookOpen
 } from 'lucide-react';
 
 interface DataIngestionProps {
@@ -33,6 +33,7 @@ interface ScraperTask {
     negOnly: boolean;
     minCharCount: number;
   };
+  kbId?: string; // Target linked knowledge base ID
 }
 
 export default function DataIngestion({
@@ -42,6 +43,66 @@ export default function DataIngestion({
   onUploadEnterpriseData,
   isAnalyzing
 }: DataIngestionProps) {
+  // Knowledge Base synced states loaded from /api/kb
+  const [kbs, setKbs] = useState<KnowledgeBase[]>([]);
+  const [fieldKbId, setFieldKbId] = useState<string>('');
+  const [inlineKbTitle, setInlineKbTitle] = useState('');
+  const [inlineKbDesc, setInlineKbDesc] = useState('');
+  const [inlineKbCategory, setInlineKbCategory] = useState<'formula' | 'competitor' | 'insight' | 'marketing' | 'policy'>('insight');
+  const [showInlineCreateKb, setShowInlineCreateKb] = useState(false);
+  const [inlineKbSaving, setInlineKbSaving] = useState(false);
+
+  const fetchKbs = async () => {
+    try {
+      const res = await fetch('/api/kb');
+      if (res.ok) {
+        const result = await res.json();
+        setKbs(result.data || []);
+      }
+    } catch (e) {
+      console.error('Error fetching knowledge bases in DataIngestion:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchKbs();
+  }, []);
+
+  const handleCreateInlineKb = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!inlineKbTitle.trim() || !inlineKbDesc.trim()) return;
+    setInlineKbSaving(true);
+    try {
+      const res = await fetch('/api/kb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: inlineKbTitle,
+          description: inlineKbDesc,
+          category: inlineKbCategory,
+          securityLevel: 'L1',
+          isPublic: true,
+          permittedRoles: ["研发组", "策划组", "销售组"]
+        })
+      });
+      if (res.ok) {
+        await fetchKbs();
+        const data = await res.json();
+        const newKb = data.data; 
+        if (newKb) {
+          setFieldKbId(newKb.id);
+        }
+        setInlineKbTitle('');
+        setInlineKbDesc('');
+        setShowInlineCreateKb(false);
+      }
+    } catch (err) {
+      console.error('Error creating inline knowledge base:', err);
+    } finally {
+      setInlineKbSaving(false);
+    }
+  };
+
   // Manual comment box states
   const [activePlatform, setActivePlatform] = useState<'小红书' | '抖音' | 'B站' | '大众点评'>('小红书');
   const [commentContent, setCommentContent] = useState('');
@@ -68,6 +129,7 @@ export default function DataIngestion({
     lastSyncAt: string;
     totalSyncRecords: number;
     syncFrequency: 'Realtime' | 'Hourly' | 'Daily';
+    kbId?: string;
   }
 
   const [activeIntegrationsTab, setActiveIntegrationsTab] = useState<'file' | 'api'>('file');
@@ -125,6 +187,92 @@ export default function DataIngestion({
   const [newConnFreq, setNewConnFreq] = useState<'Realtime' | 'Hourly' | 'Daily'>('Hourly');
   const [showTokenMask, setShowTokenMask] = useState(true);
 
+  // File manual upload KB association states
+  const [fileKbId, setFileKbId] = useState<string>('');
+  const [showFileInlineCreateKb, setShowFileInlineCreateKb] = useState(false);
+  const [fileInlineKbTitle, setFileInlineKbTitle] = useState('');
+  const [fileInlineKbDesc, setFileInlineKbDesc] = useState('');
+  const [fileInlineKbCategory, setFileInlineKbCategory] = useState<'formula' | 'competitor' | 'insight' | 'marketing' | 'policy'>('insight');
+  const [fileInlineKbSaving, setFileInlineKbSaving] = useState(false);
+
+  const handleCreateFileInlineKb = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!fileInlineKbTitle.trim() || !fileInlineKbDesc.trim()) return;
+    setFileInlineKbSaving(true);
+    try {
+      const res = await fetch('/api/kb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: fileInlineKbTitle,
+          description: fileInlineKbDesc,
+          category: fileInlineKbCategory,
+          securityLevel: 'L1',
+          isPublic: true,
+          permittedRoles: ["研发组", "策划组", "销售组"]
+        })
+      });
+      if (res.ok) {
+        await fetchKbs();
+        const data = await res.json();
+        const newKb = data.data; 
+        if (newKb) {
+          setFileKbId(newKb.id);
+        }
+        setFileInlineKbTitle('');
+        setFileInlineKbDesc('');
+        setShowFileInlineCreateKb(false);
+      }
+    } catch (err) {
+      console.error('Error creating file inline knowledge base:', err);
+    } finally {
+      setFileInlineKbSaving(false);
+    }
+  };
+
+  // API Client-connection fields for KB association
+  const [apiKbId, setApiKbId] = useState<string>('');
+  const [showApiInlineCreateKb, setShowApiInlineCreateKb] = useState(false);
+  const [apiInlineKbTitle, setApiInlineKbTitle] = useState('');
+  const [apiInlineKbDesc, setApiInlineKbDesc] = useState('');
+  const [apiInlineKbCategory, setApiInlineKbCategory] = useState<'formula' | 'competitor' | 'insight' | 'marketing' | 'policy'>('insight');
+  const [apiInlineKbSaving, setApiInlineKbSaving] = useState(false);
+
+  const handleCreateApiInlineKb = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!apiInlineKbTitle.trim() || !apiInlineKbDesc.trim()) return;
+    setApiInlineKbSaving(true);
+    try {
+      const res = await fetch('/api/kb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: apiInlineKbTitle,
+          description: apiInlineKbDesc,
+          category: apiInlineKbCategory,
+          securityLevel: 'L1',
+          isPublic: true,
+          permittedRoles: ["研发组", "策划组", "销售组"]
+        })
+      });
+      if (res.ok) {
+        await fetchKbs();
+        const data = await res.json();
+        const newKb = data.data; 
+        if (newKb) {
+          setApiKbId(newKb.id);
+        }
+        setApiInlineKbTitle('');
+        setApiInlineKbDesc('');
+        setShowApiInlineCreateKb(false);
+      }
+    } catch (err) {
+      console.error('Error creating api inline knowledge base:', err);
+    } finally {
+      setApiInlineKbSaving(false);
+    }
+  };
+
   // Business connections triggers
   const handleTestConnection = async (id: string, name: string) => {
     setTestingConnectionId(id);
@@ -166,20 +314,53 @@ export default function DataIngestion({
         conn.type === 'CRM' ? '会员积分偏好明细' :
         conn.type === 'MiniProgram' ? '小程序定制选项汇总' :
         '产品舆情及差评退款反馈';
-
+ 
       const defaultSummaries = {
         POS: `API网关拉取了 ${recordsToIngest} 条售卖清单。甜点饮品品类统计中，开心果司康/糯叽叽/低糖巴斯克等爆款成交提速 11.2%，国潮礼盒销售表现出色。`,
         CRM: `成功通过接口集成 ${recordsToIngest} 笔年轻会员偏好，本周下午茶时间（14:00-17:00）订单复购周期缩短至 4.2 天。`,
         MiniProgram: `获取外卖小程序 ${recordsToIngest} 笔加料偏好：开心果流心、少糖、加双份麻薯等高定选项被消费者热切勾选。`,
         CustomerComplaint: `实时同步近48h敏感词监控客诉 ${recordsToIngest} 条，针对开心果等配比的“干巴”、“吞咽噎脖子”、“包装损坏”退款投诉已分类。`
       };
-
+ 
       onUploadEnterpriseData(
         conn.type,
         fileName,
         recordsToIngest,
         defaultSummaries[conn.type]
       );
+ 
+      // Auto-upload API synchronized data to target knowledge base if associated
+      if (conn.kbId && recordsToIngest > 0) {
+        try {
+          const docTitle = `【主业务网关API实时同步】${conn.name} - ${new Date().toLocaleDateString('zh-CN')} 同步报告`;
+          const baseName = kbs.find(k => k.id === conn.kbId)?.title || '目标知识库';
+          
+          let docContent = `## 主业务网关实时数据对齐同步报告：${conn.name}\n`;
+          docContent += `> 本报告由业务系统 API 总线自动监听并聚合，已归入 **${baseName}** 知识库中。\n\n`;
+          docContent += `- **对接端点 URL**：\`${conn.endpointUrl}\`\n`;
+          docContent += `- **鉴权握手模式**：\`${conn.authType}\`\n`;
+          docContent += `- **API 本轮抓取并整合行数**：**${recordsToIngest}** 条有效成交及活跃信息\n`;
+          docContent += `- **清洗清洗归纳摘要**：\n\n`;
+          docContent += `> ${defaultSummaries[conn.type]}\n\n`;
+          docContent += `### 💡 AI辅助业务增长与风味调配对策\n`;
+          docContent += `1. **风味偏向感知**：接口大盘实时抓获的数据回执显示，爆品与高品质加料（如椰香、少糖定制项）在食客心智中占有统治级比重。应加速对应配方（配比节点）的安全锁定与技术标准化。\n`;
+          docContent += `2. **复购路径推荐**：在多轮客诉及流失分析中，吞咽噎脖子等负面反馈集中在重度干硬的面包甜点上。强烈推荐在工艺线上提升湿度或加入高品质夹心，将客诉在源头化解并自动迭代到相应的“安全标准生产规范”知识库中。`;
+
+          await fetch('/api/kb/docs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              kbId: conn.kbId,
+              title: docTitle,
+              content: docContent,
+              author: '业务API自动同步探针',
+              tags: ['API对接', '实时流水', '系统集成']
+            })
+          });
+        } catch (kbErr) {
+          console.error("Failed to automatically store ingested business API data to KB docs:", kbErr);
+        }
+      }
 
       setApiConnections(prev => prev.map(c => {
         if (c.id === conn.id) {
@@ -192,12 +373,12 @@ export default function DataIngestion({
         }
         return c;
       }));
-
+ 
       setIntegrationMessage({
         type: 'success',
-        text: `【${conn.name}】自动对接同步并完成洗码归纳！通过 API 拉取到 ${recordsToIngest} 条「${typeLabel}」记录，已转换融合并参与 AI 下游大牌风味雷达研判。`
+        text: `【${conn.name}】自动对接同步并完成洗码归纳！通过 API 拉取到 ${recordsToIngest} 条「${typeLabel}」记录，已转换融合并参与 AI 下游大牌风味雷达研判${conn.kbId ? '，并且已将归纳后的结构化运营报告实时转存至关联知识库中' : ''}。`
       });
-
+ 
     } catch (err) {
       setIntegrationMessage({
         type: 'error',
@@ -207,11 +388,11 @@ export default function DataIngestion({
       setSyncingConnectionId(null);
     }
   };
-
+ 
   const handleCreateConnection = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newConnName.trim() || !newConnUrl.trim()) return;
-
+ 
     const newConn: ApiConnection = {
       id: 'conn-' + Date.now(),
       name: newConnName,
@@ -222,9 +403,10 @@ export default function DataIngestion({
       authToken: newConnToken || 'sec_key_demo_029fe3',
       lastSyncAt: '从未同步',
       totalSyncRecords: 0,
-      syncFrequency: newConnFreq
+      syncFrequency: newConnFreq,
+      kbId: apiKbId || undefined
     };
-
+ 
     setApiConnections(prev => [...prev, newConn]);
     setShowAddConnectionForm(false);
     
@@ -232,6 +414,7 @@ export default function DataIngestion({
     setNewConnName('');
     setNewConnUrl('');
     setNewConnToken('');
+    setApiKbId('');
     
     setIntegrationMessage({
       type: 'success',
@@ -263,7 +446,8 @@ export default function DataIngestion({
       cookieState: 'sh_session_uid=82fefc293cf021df; security_token=xhs_9120aefcde431d;',
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 Chrome/Mobile/122.0',
       proxyEnabled: true,
-      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 15 }
+      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 15 },
+      kbId: 'kb_1'
     },
     { 
       id: 't-2', 
@@ -277,7 +461,8 @@ export default function DataIngestion({
       cookieState: 'dy_passport_session=dy_csrf_90f23fef2a8cb901; t_cookie=dy91023fc91823;',
       userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36',
       proxyEnabled: true,
-      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 10 }
+      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 10 },
+      kbId: 'kb_2'
     },
     { 
       id: 't-3', 
@@ -291,7 +476,8 @@ export default function DataIngestion({
       cookieState: 'SESSDATA=bilibili_90df21f8ad3210ec; df_uid=31201923; b_sid=82fdfe21;',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36',
       proxyEnabled: false,
-      filterRules: { noAd: false, posOnly: false, negOnly: true, minCharCount: 5 }
+      filterRules: { noAd: false, posOnly: false, negOnly: true, minCharCount: 5 },
+      kbId: 'kb_1'
     },
     { 
       id: 't-4', 
@@ -305,7 +491,8 @@ export default function DataIngestion({
       cookieState: 'dp_sid=dp_823fecd2013fdaae; member_id=293810182; dp_ticket=9102;',
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/122.0.0.0 Safari/537.36',
       proxyEnabled: true,
-      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 20 }
+      filterRules: { noAd: true, posOnly: false, negOnly: false, minCharCount: 20 },
+      kbId: 'kb_3'
     }
   ]);
 
@@ -345,6 +532,7 @@ export default function DataIngestion({
     setFieldPosOnly(task.filterRules.posOnly);
     setFieldNegOnly(task.filterRules.negOnly);
     setFieldMinCharCount(task.filterRules.minCharCount);
+    setFieldKbId(task.kbId || '');
   };
 
   // Start pristine draft fields for creation
@@ -363,6 +551,7 @@ export default function DataIngestion({
     setFieldPosOnly(false);
     setFieldNegOnly(false);
     setFieldMinCharCount(15);
+    setFieldKbId('');
   };
 
   // Save Task (Add or edit)
@@ -388,7 +577,8 @@ export default function DataIngestion({
               posOnly: fieldPosOnly,
               negOnly: fieldNegOnly,
               minCharCount: fieldMinCharCount
-            }
+            },
+            kbId: fieldKbId || undefined
           };
         }
         return t;
@@ -412,7 +602,8 @@ export default function DataIngestion({
           posOnly: fieldPosOnly,
           negOnly: fieldNegOnly,
           minCharCount: fieldMinCharCount
-        }
+        },
+        kbId: fieldKbId || undefined
       };
       setScraperTasks(prev => [...prev, newTask]);
       setShowCreateForm(false);
@@ -497,9 +688,45 @@ export default function DataIngestion({
         return t;
       }));
 
+      // Auto-upload scraped reports/records to the associated knowledge base
+      if (task.kbId && successCount > 0) {
+        try {
+          const docTitle = `【智能探针配置存储】${task.sourceName} - ${new Date().toLocaleDateString('zh-CN')} 同步报告`;
+          const baseName = kbs.find(k => k.id === task.kbId)?.title || '所选知识库';
+          
+          let docContent = `## 采集探针自动整合报告：${task.sourceName}\n`;
+          docContent += `> 本报告由多源采集智能自动整合并并入 **${baseName}** 中。\n\n`;
+          docContent += `- **监测数据源平台**：${platform}\n`;
+          docContent += `- **监控追踪核心词**：\`${task.targetKeywords}\`\n`;
+          docContent += `- **本次提取并洗码条数**：已成功捕获并分析了 **${successCount}** 条互联网原声评价。\n\n`;
+          docContent += `### 🎯 捕获的关键消费者声音与反馈明细\n`;
+          itemsToProcess.forEach((item, idx) => {
+            docContent += `#### FEED-${idx + 1}. 来自用户「${item.author}」的评价反馈\n`;
+            docContent += `> ${item.content}\n\n`;
+          });
+          docContent += `### 💡 AI风味雷达研判建议\n`;
+          docContent += `1. **口感风味调优**：评论中提及的原料比例在年轻消费人群中呼声很高，推荐在下一个配方迭代中进行试验验证。\n`;
+          docContent += `2. **市场溢价锚定**：国潮礼盒与下午茶下午时间的分享装在渠道中有巨大溢价潜力，适合加大新媒体文案曝光。`;
+
+          await fetch('/api/kb/docs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              kbId: task.kbId,
+              title: docTitle,
+              content: docContent,
+              author: '多源探针智脑',
+              tags: ['探针数据', '舆情同步', '自动导入']
+            })
+          });
+        } catch (kbErr) {
+          console.error("Failed to automatically store ingested comments to KB docs:", kbErr);
+        }
+      }
+
       setSyncMessage({
         type: 'success',
-        text: `【${task.sourceName}】对齐并在后台调用 Gemini 3.5 完成建模分析！共提取 ${successCount} 条围绕关键字「${primaryKeyword}」的原声，已并入下文“消费者反馈舆情池”中！`
+        text: `【${task.sourceName}】对齐并在后台调用 Gemini 3.5 完成建模分析！共提取 ${successCount} 条围绕关键字「${primaryKeyword}」的原声，已并入下文“消费者反馈舆情池”${task.kbId ? '，并且已自动转换为最新文献报告归纳存入关联的知识库中' : ''}！`
       });
     } catch (err) {
       setSyncMessage({
@@ -551,7 +778,46 @@ export default function DataIngestion({
       defaultSummaries[selectedFileType]
     );
 
-    setUploadMessage(`文件 「${fileName}」 仿真导入并完成序列化建模成功！已并入 AI 动态分析引擎！`);
+    // Auto-upload business data file to associated knowledge base if available
+    if (fileKbId && mockRows > 0) {
+      (async () => {
+        try {
+          const docTitle = `【经营业务系统文件导入】${fileName} - ${new Date().toLocaleDateString('zh-CN')} 结构化报告`;
+          const baseName = kbs.find(k => k.id === fileKbId)?.title || '目标知识库';
+          const typeLabel = 
+            selectedFileType === 'POS' ? 'POS 收银成交数据' :
+            selectedFileType === 'CRM' ? 'CRM 会员消费偏好习惯' :
+            selectedFileType === 'MiniProgram' ? '外卖小程序交互动作明细' :
+            '客服退款客诉敏感词监控';
+
+          let docContent = `## 经营数据文件自动整合清洗报告：${fileName}\n`;
+          docContent += `> 本报告由经营业绩智能分析器整合，并入 **${baseName}** 中进行多维度风味建模。\n\n`;
+          docContent += `- **导入文件数据类型**：${typeLabel} (${selectedFileType})\n`;
+          docContent += `- **实际清洗仿真行数**：**${mockRows}** 行有效明细记录\n`;
+          docContent += `- **AI 智脑大牌建模归纳**：\n\n`;
+          docContent += `> ${defaultSummaries[selectedFileType]}\n\n`;
+          docContent += `### 📈 针对这批经营大数的业务雷射优化建议\n`;
+          docContent += `1. **供需杠杆调配**：根据导入趋势，爆品加料率已出现爆发式跃迁，需要提早在供应链端追加相应原料（如精选开心果碎、麻薯大福粉等）的安全库存配置。\n`;
+          docContent += `2. **复购粘性捕获**：下午茶主推下午套餐（开心果巴斯克配大福）能有效拉动午间及日暮时段的单次流水，提议在新版小程序主页及首屏进行智能滑动专栏轮播。`;
+
+          await fetch('/api/kb/docs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              kbId: fileKbId,
+              title: docTitle,
+              content: docContent,
+              author: '业务智能清洗探针',
+              tags: ['文件导入', '经营大数', '自动洗码']
+            })
+          });
+        } catch (kbErr) {
+          console.error("Failed to automatically store ingested business file to KB docs:", kbErr);
+        }
+      })();
+    }
+
+    setUploadMessage(`文件 「${fileName}」 仿真导入并完成序列化建模成功！已并入 AI 动态分析引擎！${fileKbId ? '并且已自动对齐转换为最新行业及运营报告归档至目标知识库！' : ''}`);
     setTimeout(() => {
       setUploadMessage('');
     }, 4500);
@@ -689,6 +955,18 @@ export default function DataIngestion({
                           {task.cookieState ? '已锁定' : '未挂载'} | {task.proxyEnabled ? '已开启动态代理' : '直辖直连'}
                         </span>
                       </div>
+                      
+                      {task.kbId && (
+                        <div className="flex justify-between items-center text-[10.5px] text-indigo-800 bg-indigo-50/60 px-2 py-1.5 rounded border border-indigo-100/40 mt-1.5 font-bold">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-indigo-500" />
+                            存储至知识库：
+                          </span>
+                          <span className="truncate max-w-[160px]" title={kbs.find(k => k.id === task.kbId)?.title}>
+                            {kbs.find(k => k.id === task.kbId)?.title || '检索中...'}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Footer options */}
@@ -850,6 +1128,110 @@ export default function DataIngestion({
                       onChange={e => setFieldMinCharCount(parseInt(e.target.value) || 5)}
                       className="w-full text-xs p-2 border border-slate-200 rounded-lg outline-hidden focus:border-indigo-500 bg-white"
                     />
+                  </div>
+
+                  {/* Target Knowledge Base Selection */}
+                  <div className="md:col-span-3 bg-indigo-50/40 p-4.5 rounded-xl border border-indigo-100/50 space-y-3.5 my-1">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="space-y-0.5">
+                        <label className="block text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                          <BookOpen className="w-4 h-4 text-indigo-600" />
+                          采集存储映射知识库 (Knowledge Base Association)
+                        </label>
+                        <p className="text-[11px] text-slate-400 font-medium">配置后，任何「立即抓取」而分析抽取的原始回执和智能洞察报告，都将自动文献化同步写入此知识库中。</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowInlineCreateKb(!showInlineCreateKb)}
+                        className="text-xs text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {showInlineCreateKb ? '收起创建面板' : '没有？创建新知识库'}
+                      </button>
+                    </div>
+
+                    {!showInlineCreateKb ? (
+                      <div className="space-y-1">
+                        <select
+                          value={fieldKbId}
+                          onChange={e => setFieldKbId(e.target.value)}
+                          className="w-full text-xs p-2.5 border border-indigo-200 rounded-lg outline-hidden focus:border-indigo-500 bg-white font-bold text-indigo-900"
+                        >
+                          <option value="">-- 暂不绑定知识库（仅并入本地舆情池） --</option>
+                          {kbs.map(kb => (
+                            <option key={kb.id} value={kb.id}>
+                              📂 【{kb.category === 'formula' ? '研发配方工艺' : kb.category === 'competitor' ? '重磅竞品动态' : kb.category === 'insight' ? '消费偏向洞察' : kb.category === 'marketing' ? '新旧媒体合规' : '国家规范安全'}】 {kb.title} ({kb.documentCount || 0} 篇)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-indigo-100 p-4 rounded-lg space-y-3 animate-fade-in shadow-xs">
+                        <h5 className="text-xs font-bold text-indigo-900 flex items-center gap-1">
+                          <span className="w-1.5 h-3 bg-indigo-600 rounded-xs"></span>
+                          快速配置全新二级知识库
+                        </h5>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 block">知识库名称</span>
+                            <input
+                              type="text"
+                              placeholder="例如：小红书爆款风味声量储备库"
+                              value={inlineKbTitle}
+                              onChange={e => setInlineKbTitle(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 block">所属品类维度</span>
+                            <select
+                              value={inlineKbCategory}
+                              onChange={e => setInlineKbCategory(e.target.value as any)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden bg-white"
+                            >
+                              <option value="insight">消费偏向洞察 (Consumer Insight)</option>
+                              <option value="formula">研发配方工艺 (Product Formula)</option>
+                              <option value="competitor">重磅竞品动态 (Competitor Dynamics)</option>
+                              <option value="marketing">新旧媒体合规 (Marketing Compliance)</option>
+                              <option value="policy">国家规范安全 (Regulations & Standards)</option>
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-2 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 block">知识库核心描述说明</span>
+                            <input
+                              type="text"
+                              placeholder="用于对多源采集探针传回来的特征原料、爆浆评级或用户高频客诉文字做进一步清洗对齐。"
+                              value={inlineKbDesc}
+                              onChange={e => setInlineKbDesc(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => setShowInlineCreateKb(false)}
+                            className="text-[11px] font-semibold text-slate-500 hover:bg-slate-100 px-3 py-1.5 rounded-md transition"
+                          >
+                            返回选择
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCreateInlineKb}
+                            disabled={inlineKbSaving || !inlineKbTitle.trim() || !inlineKbDesc.trim()}
+                            className="text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 px-4 py-1.5 rounded-md transition flex items-center gap-1 cursor-pointer"
+                          >
+                            {inlineKbSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                            创建并自动映射
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* HTTP auth cookies */}
@@ -1060,6 +1442,110 @@ export default function DataIngestion({
                   </div>
                 </div>
 
+                {/* File Upload Target Knowledge Base Selection */}
+                <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100/50 space-y-3.5 my-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="space-y-0.5">
+                      <label className="block text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-indigo-600 animate-pulse" />
+                        清洗数据同步知识库 (Knowledge Base Association)
+                      </label>
+                      <p className="text-[10.5px] text-slate-400 font-medium">配置后，任何「手动导入」或「拖拽清洗」产生的经营趋势、结算细账与退款问题，都将自动整合并写入所选知识库中。</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowFileInlineCreateKb(!showFileInlineCreateKb)}
+                      className="text-xs text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {showFileInlineCreateKb ? '收起创建面板' : '没有？创建新知识库'}
+                    </button>
+                  </div>
+
+                  {!showFileInlineCreateKb ? (
+                    <div className="space-y-1">
+                      <select
+                        value={fileKbId}
+                        onChange={e => setFileKbId(e.target.value)}
+                        className="w-full text-xs p-2.5 border border-indigo-200 rounded-lg outline-hidden focus:border-indigo-500 bg-white font-bold text-indigo-900"
+                      >
+                        <option value="">-- 暂不绑定知识库（仅在本地图表分析） --</option>
+                        {kbs.map(kb => (
+                          <option key={kb.id} value={kb.id}>
+                            📂 【{kb.category === 'formula' ? '研发配方工艺' : kb.category === 'competitor' ? '重磅竞品动态' : kb.category === 'insight' ? '消费偏向洞察' : kb.category === 'marketing' ? '新旧媒体合规' : '国家规范安全'}】 {kb.title} ({kb.documentCount || 0} 篇)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-indigo-150 p-4 rounded-lg space-y-3 animate-fade-in shadow-xs">
+                      <h5 className="text-xs font-bold text-indigo-900 flex items-center gap-1">
+                        <span className="w-1.5 h-3 bg-indigo-600 rounded-xs"></span>
+                        快速配置全新二级知识库
+                      </h5>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 block">知识库名称</span>
+                          <input
+                            type="text"
+                            placeholder="例如：2026餐饮消费交易结算标准库"
+                            value={fileInlineKbTitle}
+                            onChange={e => setFileInlineKbTitle(e.target.value)}
+                            className="w-full text-xs p-2.5 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden bg-white"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 block">所属品类维度</span>
+                          <select
+                            value={fileInlineKbCategory}
+                            onChange={e => setFileInlineKbCategory(e.target.value as any)}
+                            className="w-full text-xs p-2.5 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden bg-white"
+                          >
+                            <option value="insight">消费偏向洞察 (Consumer Insight)</option>
+                            <option value="formula">研发配方工艺 (Product Formula)</option>
+                            <option value="competitor">重磅竞品动态 (Competitor Dynamics)</option>
+                            <option value="marketing">新旧媒体合规 (Marketing Compliance)</option>
+                            <option value="policy">国家规范安全 (Regulations & Standards)</option>
+                          </select>
+                        </div>
+
+                        <div className="md:col-span-2 space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 block">知识库核心描述说明</span>
+                          <input
+                            type="text"
+                            placeholder="用于经营成交大数归集、加料配比统计以及舆情差评洗码定位说明。"
+                            value={fileInlineKbDesc}
+                            onChange={e => setFileInlineKbDesc(e.target.value)}
+                            className="w-full text-xs p-2.5 border border-slate-200 rounded-md focus:border-indigo-500 outline-hidden bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => setShowFileInlineCreateKb(false)}
+                          className="text-[11px] font-semibold text-slate-500 hover:bg-slate-100 px-3 py-1.5 rounded-md transition"
+                        >
+                          返回选择
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCreateFileInlineKb}
+                          disabled={fileInlineKbSaving || !fileInlineKbTitle.trim() || !fileInlineKbDesc.trim()}
+                          className="text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 px-4 py-1.5 rounded-md transition flex items-center gap-1 cursor-pointer"
+                        >
+                          {fileInlineKbSaving && <Loader2 className="w-3 h-3 animate-spin bg-transparent" />}
+                          创建并自动映射
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Drag & Drop Zone */}
                 <div 
                   onDragEnter={handleDrag}
@@ -1206,6 +1692,103 @@ export default function DataIngestion({
                           className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white font-mono box-border outline-hidden focus:border-indigo-500"
                         />
                       </div>
+
+                      {/* API Endpoint target Knowledge Base selector & Inline Creation Panel */}
+                      <div className="md:col-span-2 bg-indigo-50/45 p-4 rounded-xl border border-indigo-150/40 space-y-3 my-1">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <span className="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
+                            <BookOpen className="w-4 h-4 text-indigo-600 animate-pulse" />
+                            关联同步知识库 (Knowledge Base Association)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowApiInlineCreateKb(!showApiInlineCreateKb)}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-900 bg-white hover:bg-slate-50 border border-indigo-200 px-2 py-1 rounded font-bold transition cursor-pointer flex items-center gap-1"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            {showApiInlineCreateKb ? '返回选择已有知识库' : '创建新二级知识库'}
+                          </button>
+                        </div>
+
+                        {!showApiInlineCreateKb ? (
+                          <select
+                            value={apiKbId}
+                            onChange={(e) => setApiKbId(e.target.value)}
+                            className="w-full text-xs p-2.5 border border-indigo-200 rounded-lg outline-hidden focus:border-indigo-500 bg-white font-bold text-indigo-900"
+                          >
+                            <option value="">-- 暂不绑定知识库（仅通过大数面板监控） --</option>
+                            {kbs.map((kb) => (
+                              <option key={kb.id} value={kb.id}>
+                                📂 【{kb.category === 'formula' ? '研发配方工艺' : kb.category === 'competitor' ? '重磅竞品动态' : kb.category === 'insight' ? '消费偏向洞察' : kb.category === 'marketing' ? '新旧媒体合规' : '国家规范安全'}】 {kb.title} ({kb.documentCount || 0} 篇)
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="bg-white border border-indigo-100 p-3 rounded-lg space-y-3 animate-fade-in shadow-xs">
+                            <h5 className="text-[11px] font-bold text-indigo-900 flex items-center gap-1">
+                              配属全新关联二级知识库
+                            </h5>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <span className="text-[9.5px] font-bold text-slate-500 block">知识库名称</span>
+                                <input
+                                  type="text"
+                                  placeholder="例如：CRM客户复购及加阻预研库"
+                                  value={apiInlineKbTitle}
+                                  onChange={(e) => setApiInlineKbTitle(e.target.value)}
+                                  className="w-full text-xs p-2.5 border border-slate-200 rounded focus:border-indigo-500 outline-hidden bg-white"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="text-[9.5px] font-bold text-slate-500 block">所属品类维度</span>
+                                <select
+                                  value={apiInlineKbCategory}
+                                  onChange={(e) => setApiInlineKbCategory(e.target.value as any)}
+                                  className="w-full text-xs p-2.5 border border-slate-200 rounded focus:border-indigo-500 outline-hidden bg-white"
+                                >
+                                  <option value="insight">消费偏向洞察 (Consumer Insight)</option>
+                                  <option value="formula">研发配方工艺 (Product Formula)</option>
+                                  <option value="competitor">重磅竞品动态 (Competitor Dynamics)</option>
+                                  <option value="marketing">新旧媒体合规 (Marketing Compliance)</option>
+                                  <option value="policy">国家规范安全 (Regulations & Standards)</option>
+                                </select>
+                              </div>
+
+                              <div className="md:col-span-2 space-y-1">
+                                <span className="text-[9.5px] font-bold text-slate-500 block">知识库描述</span>
+                                <input
+                                  type="text"
+                                  placeholder="对该物理API端口实时传回的会员画像、敏感标签及加料决策做文献化分析。"
+                                  value={apiInlineKbDesc}
+                                  onChange={(e) => setApiInlineKbDesc(e.target.value)}
+                                  className="w-full text-xs p-2.5 border border-slate-200 rounded focus:border-indigo-500 outline-hidden bg-white"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-1.5 pt-1.5 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setShowApiInlineCreateKb(false)}
+                                className="text-[10px] font-semibold text-slate-500 hover:bg-slate-100 px-2.5 py-1 rounded"
+                              >
+                                返回选择
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCreateApiInlineKb}
+                                disabled={apiInlineKbSaving || !apiInlineKbTitle.trim() || !apiInlineKbDesc.trim()}
+                                className="text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 px-3 py-1 rounded transition flex items-center gap-1 cursor-pointer"
+                              >
+                                {apiInlineKbSaving && <Loader2 className="w-3 h-3 animate-spin bg-transparent" />}
+                                创建并自动选择
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
@@ -1276,6 +1859,16 @@ export default function DataIngestion({
                             <span>已同步：<strong className="text-slate-700 font-mono">{conn.totalSyncRecords.toLocaleString()} 条</strong></span>
                             <span>上次联动时间：<strong className="text-slate-600">{conn.lastSyncAt}</strong></span>
                           </div>
+
+                          {conn.kbId && (
+                            <div className="flex items-center gap-1.5 text-[10.5px] text-indigo-800 bg-indigo-50/60 px-2 py-1.5 rounded-lg border border-indigo-100/40 mt-2 font-bold w-fit animate-fade-in">
+                              <BookOpen className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                              <span>存储至知识库：</span>
+                              <span className="truncate max-w-[280px]" title={kbs.find(k => k.id === conn.kbId)?.title}>
+                                {kbs.find(k => k.id === conn.kbId)?.title || '加载中...'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* CONTROLS */}

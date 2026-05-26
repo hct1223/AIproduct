@@ -226,15 +226,28 @@ export default function Dashboard({
                 const isWarningRate = item.warning;
                 const meta = dimensionMeta[item.dimension];
 
+                // Check lifecycle for growth or explosive status
+                const isGrowth = (item.lifecycle as string) === '成长期' || (item.lifecycle as string) === '成成长';
+                const isExplosive = (item.lifecycle as string) === '爆发期' || isWarningRate;
+
+                let pulseBgClass = '';
+                if (isExplosive) {
+                  pulseBgClass = 'animate-pulse-explosive';
+                } else if (isGrowth) {
+                  pulseBgClass = 'animate-pulse-growth';
+                }
+
+                const bgBorderStateClass = isSelected 
+                  ? 'bg-slate-50/90 border-slate-900' 
+                  : pulseBgClass 
+                    ? `${pulseBgClass} border-transparent hover:brightness-95` 
+                    : 'hover:bg-slate-50/50 border-transparent';
+
                 return (
                   <div
                     key={item.id}
                     onClick={() => setActiveKeywordId(item.id)}
-                    className={`p-3.5 text-left cursor-pointer transition flex items-start gap-3 border-l-3 ${
-                      isSelected 
-                        ? 'bg-slate-50/90 border-slate-900' 
-                        : 'hover:bg-slate-50/50 border-transparent'
-                    }`}
+                    className={`p-3.5 text-left cursor-pointer transition flex items-start gap-3 border-l-3 ${bgBorderStateClass}`}
                   >
                     {/* Circle indicators */}
                     <div className="mt-1 flex-shrink-0">
